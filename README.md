@@ -1,3 +1,4 @@
+```mermaid
 flowchart LR
   %% Internet + DNS
   subgraph Internet
@@ -50,3 +51,4 @@ flowchart LR
     B1 --> APP4
 
   end
+```
