@@ -147,3 +147,53 @@ flowchart LR
     APP_GW --> DB_GW
     DB_GW --> DB
 ```
+
+```mermaid
+flowchart LR
+
+    Client[Client] --> DNS[DNS]
+    DNS -->|203.0.113.10 or 203.0.113.11| Client
+
+    Client --> FW[Firewall]
+
+    FW --> VIP1[VIP1 (Pair1)]
+    FW --> VIP2[VIP2 (Pair2)]
+
+    subgraph F5_Pair1
+        A1[F5 A1 Active]
+        A2[F5 A2 Standby]
+        INT1[Internal Float 10.20.20.101]
+    end
+
+    subgraph F5_Pair2
+        B1[F5 B1 Active]
+        B2[F5 B2 Standby]
+        INT2[Internal Float 10.20.20.201]
+    end
+
+    VIP1 --> A1
+    VIP2 --> B1
+
+    subgraph App_VLAN_10_20_20_0_24
+        APP1[App1 10.20.20.11\nGW 10.20.20.101]
+        APP2[App2 10.20.20.12\nGW 10.20.20.101]
+        APP3[App3 10.20.20.13\nGW 10.20.20.201]
+        APP4[App4 10.20.20.14\nGW 10.20.20.201]
+    end
+
+    %% Pair1 to App1/2
+    A1 --> APP1
+    A1 --> APP2
+    APP1 --> INT1
+    APP2 --> INT1
+
+    %% Pair2 to App3/4
+    B1 --> APP3
+    B1 --> APP4
+    APP3 --> INT2
+    APP4 --> INT2
+
+    %% F5 internal floats route back via Firewall
+    INT1 --> FW
+    INT2 --> FW
+```
