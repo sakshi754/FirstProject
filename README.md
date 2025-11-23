@@ -36,6 +36,10 @@ flowchart LR
     B1 --> APP4
 ```
 
+
+
+
+
 ```mermaid
 flowchart LR
 
@@ -68,4 +72,25 @@ flowchart LR
         B1 --> APP1_DC2
         B1 --> APP2_DC2
     end
+```
+
+
+
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant FW as Firewall
+    participant F5 as F5 LTM
+    participant App as App Server
+
+    Client->>FW: HTTPS Request
+    FW->>F5: DNAT to VIP
+    F5->>F5: TLS Terminate + Decrypt
+    F5->>F5: User Persistence (cookie / user_id)
+    F5->>App: New TLS Connection (Re-Encrypt)
+    App-->>F5: HTTPS Response
+    F5->>F5: Inspect + Re-Encrypt
+    F5-->>FW: HTTPS Response
+    FW-->>Client: HTTPS Response
 ```
