@@ -91,3 +91,59 @@ flowchart LR
         APP2_DC2 --> DB2
     end
 ```
+
+```mermaid
+flowchart LR
+
+    Client[Client] --> DNS[DNS]
+    DNS -->|203.0.113.10 or 203.0.113.11| Client
+
+    Client --> FW[Firewall]
+
+    FW --> VIP1[VIP1 10.10.10.10]
+    FW --> VIP2[VIP2 10.10.10.20]
+
+    subgraph F5_Pair1
+        A1[F5 A1 Active]
+        A2[F5 A2 Standby]
+    end
+
+    subgraph F5_Pair2
+        B1[F5 B1 Active]
+        B2[F5 B2 Standby]
+    end
+
+    VIP1 --> A1
+    VIP2 --> B1
+
+    %% App VLAN with default gateway
+    subgraph App_VLAN_10_20_20_0_24
+        APP_GW[App GW 10.20.20.1]
+        APP1[Web/App1 10.20.20.11]
+        APP2[Web/App2 10.20.20.12]
+        APP3[Web/App3 10.20.20.13]
+        APP4[Web/App4 10.20.20.14]
+    end
+
+    %% DB VLAN with default gateway
+    subgraph DB_VLAN_10_30_30_0_24
+        DB_GW[DB GW 10.30.30.1]
+        DB[DB Cluster 10.30.30.10]
+    end
+
+    %% F5 to webservers (HTTPS, SNAT)
+    A1 --> APP1
+    A1 --> APP2
+    B1 --> APP3
+    B1 --> APP4
+
+    %% Webservers use App GW as default gateway
+    APP1 --> APP_GW
+    APP2 --> APP_GW
+    APP3 --> APP_GW
+    APP4 --> APP_GW
+
+    %% Routing between App GW and DB GW, then DB
+    APP_GW --> DB_GW
+    DB_GW --> DB
+```
