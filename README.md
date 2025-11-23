@@ -1,96 +1,55 @@
 ```mermaid
 flowchart LR
 
-    Client --> DNS[DNS]
+    %% Client + DNS
+    Client[Client] --> DNS[DNS]
     DNS -->|203.0.113.10| Client
     DNS -->|203.0.113.11| Client
 
-    Client --> FW[Firewall]
+    %% Edge FW
+    Client --> FW[Perimeter Firewall]
 
-    FW --> VIP1[VIP1 10.10.10.10:443]
-    FW --> VIP2[VIP2 10.10.10.20:443]
+    %% VIPs on external VLAN
+    FW --> VIP1[VIP1 10.10.10.10:443\nExternal VLAN 10.10.10.0/24]
+    FW --> VIP2[VIP2 10.10.10.20:443\nExternal VLAN 10.10.10.0/24]
 
-    subgraph Pair1_F5s
-        A1[F5-A1 Active]
-        A2[F5-A2 Standby]
+    %% F5 HA Pair 1
+    subgraph F5_Pair1[HA Pair 1]
+        A1[F5-A1 (Active)\nLTM Only]
+        A2[F5-A2 (Standby)]
     end
-
-    subgraph Pair2_F5s
-        B1[F5-B1 Active]
-        B2[F5-B2 Standby]
-    end
-
     VIP1 --> A1
+
+    %% F5 HA Pair 2
+    subgraph F5_Pair2[HA Pair 2]
+        B1[F5-B1 (Active)\nLTM Only]
+        B2[F5-B2 (Standby)]
+    end
     VIP2 --> B1
 
-    subgraph AppTier
-        APP1[App1]
-        APP2[App2]
-        APP3[App3]
-        APP4[App4]
+    %% App VLAN
+    subgraph App_VLAN[App VLAN 10.20.20.0/24]
+        APP1[APP1 10.20.20.11:443]
+        APP2[APP2 10.20.20.12:443]
+        APP3[APP3 10.20.20.13:443]
+        APP4[APP4 10.20.20.14:443]
     end
 
+    %% DB VLAN
+    subgraph DB_VLAN[DB VLAN 10.30.30.0/24]
+        DB[DB Cluster 10.30.30.10]
+    end
+
+    %% Traffic from F5 to App servers (re-encrypted HTTPS)
     A1 --> APP1
     A1 --> APP2
+
     B1 --> APP3
     B1 --> APP4
-```
 
-
-
-
-
-```mermaid
-flowchart LR
-
-    Client --> DNS[DNS/GSLB]
-    DNS -->|203.0.113.10 (DC1)| Client
-    DNS -->|198.51.100.10 (DC2)| Client
-
-    Client --> FW1[Firewall DC1]
-    Client --> FW2[Firewall DC2]
-
-    FW1 --> VIP1[DC1 VIP 10.10.10.10:443]
-    FW2 --> VIP2[DC2 VIP 10.30.30.10:443]
-
-    subgraph DC1
-        A1[F5-A1 Active]
-        A2[F5-A2 Standby]
-        VIP1 --> A1
-        APP1_DC1[App1 DC1]
-        APP2_DC1[App2 DC1]
-        A1 --> APP1_DC1
-        A1 --> APP2_DC1
-    end
-
-    subgraph DC2
-        B1[F5-B1 Active]
-        B2[F5-B2 Standby]
-        VIP2 --> B1
-        APP1_DC2[App1 DC2]
-        APP2_DC2[App2 DC2]
-        B1 --> APP1_DC2
-        B1 --> APP2_DC2
-    end
-```
-
-
-
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant FW as Firewall
-    participant F5 as F5 LTM
-    participant App as App Server
-
-    Client->>FW: HTTPS Request
-    FW->>F5: DNAT to VIP
-    F5->>F5: TLS Terminate + Decrypt
-    F5->>F5: User Persistence (cookie / user_id)
-    F5->>App: New TLS Connection (Re-Encrypt)
-    App-->>F5: HTTPS Response
-    F5->>F5: Inspect + Re-Encrypt
-    F5-->>FW: HTTPS Response
-    FW-->>Client: HTTPS Response
+    %% App to DB
+    APP1 --> DB
+    APP2 --> DB
+    APP3 --> DB
+    APP4 --> DB
 ```
