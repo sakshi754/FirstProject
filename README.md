@@ -150,50 +150,27 @@ flowchart LR
 
 ```mermaid
 flowchart LR
+Client["Client"] --> FW["Firewall"]
 
-    Client[Client] --> DNS[DNS]
-    DNS -->|203.0.113.10 or 203.0.113.11| Client
+FW --> VIP1["VIP1 on Pair1"]
+FW --> VIP2["VIP2 on Pair2"]
 
-    Client --> FW[Firewall]
+VIP1 --> F5P1["F5 Pair1"]
+VIP2 --> F5P2["F5 Pair2"]
 
-    FW --> VIP1[VIP1 (Pair1)]
-    FW --> VIP2[VIP2 (Pair2)]
+F5P1 --> APP1["App1 10.20.20.11 GW 10.20.20.101"]
+F5P1 --> APP2["App2 10.20.20.12 GW 10.20.20.101"]
 
-    subgraph F5_Pair1
-        A1[F5 A1 Active]
-        A2[F5 A2 Standby]
-        INT1[Internal Float 10.20.20.101]
-    end
+F5P2 --> APP3["App3 10.20.20.13 GW 10.20.20.201"]
+F5P2 --> APP4["App4 10.20.20.14 GW 10.20.20.201"]
 
-    subgraph F5_Pair2
-        B1[F5 B1 Active]
-        B2[F5 B2 Standby]
-        INT2[Internal Float 10.20.20.201]
-    end
+APP1 --> F5P1_INT["F5P1 int float 10.20.20.101"]
+APP2 --> F5P1_INT
 
-    VIP1 --> A1
-    VIP2 --> B1
+APP3 --> F5P2_INT["F5P2 int float 10.20.20.201"]
+APP4 --> F5P2_INT
 
-    subgraph App_VLAN_10_20_20_0_24
-        APP1[App1 10.20.20.11\nGW 10.20.20.101]
-        APP2[App2 10.20.20.12\nGW 10.20.20.101]
-        APP3[App3 10.20.20.13\nGW 10.20.20.201]
-        APP4[App4 10.20.20.14\nGW 10.20.20.201]
-    end
-
-    %% Pair1 to App1/2
-    A1 --> APP1
-    A1 --> APP2
-    APP1 --> INT1
-    APP2 --> INT1
-
-    %% Pair2 to App3/4
-    B1 --> APP3
-    B1 --> APP4
-    APP3 --> INT2
-    APP4 --> INT2
-
-    %% F5 internal floats route back via Firewall
-    INT1 --> FW
-    INT2 --> FW
+F5P1_INT --> FW
+F5P2_INT --> FW
 ```
+
